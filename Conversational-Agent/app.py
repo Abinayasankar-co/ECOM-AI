@@ -1,7 +1,7 @@
 import streamlit as st
 from llm.query import generate_cypher_query
 from db.neo4j_client import save_product_to_neo4j, run_query
-from utils.tts import synthesize_voice, play_audio, cleanup_audio_file  # updated import
+from utils.tts import speak
 
 st.set_page_config(page_title="Neo4j Voice Assistant", layout="wide")
 st.title("🔍 Neo4j Query Assistant with Voice")
@@ -50,13 +50,10 @@ if user_input:
     results = run_query(cypher)
     st.json(results)
 
-    # Prepare speech text
     if results:
         spoken_text = f"The result is {results}"
+        speak(spoken_text)
+        st.success("Result spoken aloud.")
     else:
-        spoken_text = "No results found."
-
-    # Generate & play audio in browser
-    file_path = synthesize_voice(spoken_text)
-    play_audio(file_path)
-    cleanup_audio_file(file_path)
+        speak("No results found.")
+        st.warning("No results found.")
