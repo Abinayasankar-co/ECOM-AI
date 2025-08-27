@@ -1,6 +1,5 @@
 import streamlit as st
 from llm.query import generate_cypher_query
-from db.neo4j_client import save_product_to_neo4j, run_query
 from utils.tts import speak
 
 st.set_page_config(page_title="Neo4j Voice Assistant", layout="wide")
