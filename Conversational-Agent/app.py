@@ -1,28 +1,21 @@
 import streamlit as st
-from llm.query import generate_cypher_query
 from utils.tts import speak
-from neo4j import GraphDatabase
+from ui.components import show_url_input, show_summary, play_audio
+from utils.assistant_agent import RoyalEnfieldBikeAssistant
 
 st.set_page_config(page_title="Neo4j Voice Assistant", layout="wide")
 st.title("🔍 Neo4j Query Assistant with Voice")
 
+information = RoyalEnfieldBikeAssistant()
+
 if "query_history" not in st.session_state:
     st.session_state.query_history = []
-
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
-
-def run_query(cypher):
-    with driver.session() as session:
-        result = session.run(cypher)
-        return [record.data() for record in result]
 
 user_input = st.text_input("Ask your question about the graph:")
 
 if user_input:
-    cypher = generate_cypher_query(user_input)
-    st.code(cypher, language="cypher")
+   
     st.session_state.query_history.append((user_input, cypher))
-    results = run_query(cypher)
     if results:
         spoken_text = f"{results}"
         speak(spoken_text)
