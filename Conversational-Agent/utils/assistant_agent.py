@@ -1,10 +1,10 @@
-from langchain.chat_models import ChatOpenAI
+from langchain.chat_models.openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
-from langchain.chains import LLMChain
+from langchain.chains.api.base import LLMChain
 from langchain.memory import ConversationBufferMemory
 from tavily import TavilyClient
 import redis
-from document_store import DocumentStore
+from db.document_store import DocumentStore
 
 class RollsRoyceBikeAssistant:
     def __init__(self, llm_model: str, tavily_api_key: str, redis_url: str, redis_cache_host: str, redis_cache_port: int, redis_cache_db: int, vector_index: str):
