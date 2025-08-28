@@ -42,7 +42,7 @@ class RoyalEnfieldBikeAssistant:
             ai_message = await runner1.ainvoke({"user_query": user_query})
             subqs_content = ai_message.content if hasattr(ai_message, "content") else str(ai_message)
             
-            # Debug: print the raw response
+            #print the raw response(Test)
             #print("Raw LLM response:", subqs_content)
             try:
                 queries = json.loads(subqs_content)
@@ -53,10 +53,13 @@ class RoyalEnfieldBikeAssistant:
             if not queries or "questions" not in queries or not isinstance(queries["questions"], list):
                 print("Invalid JSON structure or missing 'questions' key.")
                 return None
-
+            
+            #Caching the Previous Response
             cached = [self._check_cache(query) for query in queries["questions"]]
             if all(cached):
                 return cached
+            
+            #Retriving Data form Web search and VectorDB
             tavily_results = [self.tavily.search(query) for query in queries["questions"]]
             docs = [self.doc_store.retrieve_similar(query, k=3) for query in queries["questions"]]
             docs_content = ["\n".join([d.page_content for d in doc]) for doc in docs]
@@ -73,6 +76,8 @@ class RoyalEnfieldBikeAssistant:
                 "tavily": tavily_results,
                 "docs": docs_content
             })
+
+            # Updating Cache File
             self._update_cache(user_query, final_result.content if hasattr(final_result, "content") else str(final_result))
             return final_result.content if hasattr(final_result, "questions") else str(final_result)
         

@@ -2,6 +2,7 @@ import pyttsx3
 import tempfile
 import io
 
+#Buffer and Streaming for faster transmission to user
 def speak_stream(text):
     engine = pyttsx3.init()
     buf = io.BytesIO()
@@ -14,7 +15,3 @@ def speak_stream(text):
     buf.seek(0)
     return buf
 
-
-if __name__ == "__main__":
-    txt = "Hello world"
-    speak(txt)
