@@ -45,11 +45,14 @@ class DocumentStore:
         return vector_store
 
     def load_existing_store(self):
-        return RedisVectorStore(
-            index_name=self.index_name,
-            embedding=self.embeddings,
-            redis_url=self.redis_url
-        )
+        try:
+            return RedisVectorStore(
+                embeddings=self.embeddings,
+                redis_url=self.redis_url,
+                index_name=self.index_name,
+            )
+        except Exception as e:
+            print(f"The Error While Loading the Store:{e}")
 
     def retrieve_similar(self, query: str, k: int = 3):
         store = self.load_existing_store()

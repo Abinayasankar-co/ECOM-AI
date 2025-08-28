@@ -1,15 +1,11 @@
 import os
+import json
+import redis
 import asyncio
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain.chains.api.base import LLMChain
-from langchain_core.runnables import (
-    RunnableSequence,
-)
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.memory import ConversationBufferMemory
 from tavily import TavilyClient
-import redis
 from document_store import DocumentStore
 
 load_dotenv()
@@ -30,32 +26,59 @@ class RoyalEnfieldBikeAssistant:
     def _update_cache(self, query: str, response: str):
         key = f"bike_cache:{query}"
         self.redis_cache.set(key, response, ex=3600)
+    
+    #Algorithm for Determining the User Query Regaridng the Request
+    async def processed_query(self, user_query : str) -> str:
+        try:
+            prompt1 = ChatPromptTemplate.from_messages(
+                [
+                    ("system", "The task for you is to write an elaborative and more informative question from the user's normal question. The answer must be strictly in JSON format with key 'questions' and value as a list."),
+                    ("user", f"The Query to be given is: {user_query}")
+                ]
+            )
 
-    async def process_query(self, user_query: str) -> str:
-        prompt = ChatPromptTemplate.from_template(
-            "You are a polite showroom assistant. Always greet the customer first. "
-            "Step 1: Transform their query into a list of related sub-questions. "
-            "Step 2: Retrieve relevant data from Tavily API and vector store. "
-            "Step 3: Consolidate findings. "
-            "Step 4: Provide a neat, structured, and polite answer. "
-            f"The Query from the user is : {user_query} "
-            "NOTE: The written answers should be more human friendly and conversational like you're an assistant"
-        )
-        runner = RunnableSequence(prompt, self.llm)
-        cached = self._check_cache(user_query)
-        if cached:
-            return cached
-        struct = await runner.ainvoke(user_query + "\nStep 1: list sub-questions")
-        tv = self.tavily.search(user_query)
-        vs = self.doc_store.retrieve_similar(user_query, k=3)
-        combined = (
-            f"Query: {user_query}\nSub-questions: {struct}\n"
-            f"Web searched Results from Tavily: {tv}\n"
-            f"Stored Results from VectorDB: {[d.page_content for d in vs]}"
-        )
-        final = await runner.ainvoke(combined)
-        self._update_cache(user_query, final)
-        return final
+            llm = self.llm 
+            runner1 = prompt1 | llm 
+            ai_message = await runner1.ainvoke({"user_query": user_query})
+            subqs_content = ai_message.content if hasattr(ai_message, "content") else str(ai_message)
+            
+            # Debug: print the raw response
+            #print("Raw LLM response:", subqs_content)
+            try:
+                queries = json.loads(subqs_content)
+            except Exception as json_err:
+                print(f"JSON parsing error: {json_err}")
+                return None
+
+            if not queries or "questions" not in queries or not isinstance(queries["questions"], list):
+                print("Invalid JSON structure or missing 'questions' key.")
+                return None
+
+            cached = [self._check_cache(query) for query in queries["questions"]]
+            if all(cached):
+                return cached
+            tavily_results = [self.tavily.search(query) for query in queries["questions"]]
+            docs = [self.doc_store.retrieve_similar(query, k=3) for query in queries["questions"]]
+            docs_content = ["\n".join([d.page_content for d in doc]) for doc in docs]
+
+            prompt2 = ChatPromptTemplate.from_messages(
+                [
+                    ("system", "Use the sub-questions, Tavily results, and document content to craft a conversational response."),
+                    ("user","Sub-questions: {subqs}\nTavily: {tavily}\nDocuments: {docs}")
+                ],
+            )
+            runner2 = prompt2 | llm 
+            final_result = await runner2.ainvoke({
+                "subqs": queries['questions'],
+                "tavily": tavily_results,
+                "docs": docs_content
+            })
+            self._update_cache(user_query, final_result.content if hasattr(final_result, "content") else str(final_result))
+            return final_result.content if hasattr(final_result, "questions") else str(final_result)
+        
+        except Exception as e:
+            print(f"The Exception : {e}")
+            return None
     
 if __name__ == "__main__":
     agent = RoyalEnfieldBikeAssistant(
@@ -68,4 +91,7 @@ if __name__ == "__main__":
         vector_index="bike_index"
     )
     user_input = "Tell me about the latest Royal Enfield bike model available with larger spec and its features"
-    print(asyncio.run(agent.process_query(user_input)))
+    result = asyncio.run(agent.processed_query(user_input))
+    if isinstance(result, dict) and "content" in result and "metadata" in result:
+        content, metadata = result["content"] , result["metadata"]
+        print(f"The Content : {content} , Metadata : {metadata}")
