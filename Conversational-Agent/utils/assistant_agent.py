@@ -66,7 +66,7 @@ class RoyalEnfieldBikeAssistant:
 
             prompt2 = ChatPromptTemplate.from_messages(
                 [
-                    ("system", "Use the sub-questions, Tavily results, and document content to craft a conversational response."),
+                    ("system", "Use the sub-questions, Tavily results, and document content to craft a conversational response. The Response should be more human and the generated response should be in a way of a dealer convinving the customer to buy the product. with the below data's provide a speech whoch convinces the customer and make them interactive with your statements"),
                     ("user","Sub-questions: {subqs}\nTavily: {tavily}\nDocuments: {docs}")
                 ],
             )
