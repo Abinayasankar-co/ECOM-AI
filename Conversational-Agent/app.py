@@ -1,100 +1,99 @@
 import os
-import io
-import base64
-import asyncio
 import re
+import asyncio
 import streamlit as st
+from dotenv import load_dotenv
 from utils.tts import speak_stream, speaker_stream
 from utils.assistant_agent import RoyalEnfieldBikeAssistant
-from dotenv import load_dotenv
 from utils.utilsreq import clean_text
 
+# Load environment variables
 load_dotenv()
 
-st.set_page_config(page_title="Voice Assistant", layout="wide")
-st.title("Query the Data Conversational Bot")
+# Set Streamlit page configuration
+st.set_page_config(
+    page_title="Voice Assistant",
+    layout="wide",
+    initial_sidebar_state="collapsed"  
+)
 
+# Initialize session state variables
 if "query_history" not in st.session_state:
     st.session_state.query_history = []
-
 if "messages" not in st.session_state:
-    st.session_state["messages"] = []
+    st.session_state.messages = []
 
 st.markdown("""
     <style>
-    .chat-container {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    
+    html, body, [class*="st-"] {
+        font-family: 'Poppins', sans-serif;
     }
-    .user-bubble {
-        background-color: #DCF8C6;
-        color: black;
-        padding: 12px 16px;
-        border-radius: 18px;
-        margin: 6px 0;
-        max-width: 70%;
-        align-self: flex-end;
-        font-size: 1rem;
-        font-family: 'Segoe UI', Arial, sans-serif;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    
+    .st-emotion-cache-1g6x8q4 {
+        padding-top: 1rem;
     }
-    .assistant-bubble {
-        background-color: #E4E6EB;
-        color: black;
-        padding: 12px 16px;
-        border-radius: 18px;
-        margin: 6px 0;
-        max-width: 70%;
-        align-self: flex-start;
-        font-size: 1rem;
-        font-family: 'Segoe UI', Arial, sans-serif;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    
+    .st-emotion-cache-16txtv8 {
+        padding: 1rem 1rem 8rem;
     }
+
+    .sidebar-header {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #e0e0e0;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #3e50b5;
+        padding-bottom: 10px;
+    }
+    
     .query-card {
-        background: #2c2f38;
-        color: #f1f1f1;
-        padding: 10px 15px;
+        background: #333;
+        color: #ddd;
+        padding: 15px;
         border-radius: 10px;
         margin-bottom: 10px;
         font-size: 0.9rem;
-        line-height: 1.4;
-        font-family: 'Segoe UI', Arial, sans-serif;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
+    
     .query-card strong {
-        color: #4CAF50;
+        color: #88aaff;
     }
+    
     .query-card em {
-        color: #9E9E9E;
-        font-size: 0.85rem;
+        color: #ccc;
+        font-size: 0.8rem;
     }
-    .stTextInput textarea {
-        font-size: 1rem !important;
+    
+    .st-emotion-cache-1c7v0l1.e1f1d6gn2 {
+        background-color: #262730;
     }
     </style>
 """, unsafe_allow_html=True)
 
-chat_placeholder = st.container()
+# Main Title
+st.title("🚲 Conversational Assistant")
 
-with chat_placeholder:
-    for msg in st.session_state["messages"]:
-        role_class = "user-bubble" if msg["role"] == "user" else "assistant-bubble"
-        st.markdown(
-            f"<div class='chat-container'><div class='{role_class}'>{msg['content']}</div></div>",
-            unsafe_allow_html=True
-        )
-        if msg.get("audio"):
-            st.audio(msg["audio"], format="audio/mp3")
+# Display chat messages from history on app rerun
+for message in st.session_state.messages: 
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+        if message.get("audio"):
+            st.audio(message["audio"], format="audio/mp3", autoplay=True)
 
-user_input = st.text_input("Ask your question about the graph:", value="", key="user_input")
-
-if user_input and (not st.session_state.messages or st.session_state.messages[-1]["content"] != clean_text(user_input)):
-    st.session_state.messages.append({
-        "role": "user",
-        "content": clean_text(user_input),
-        "audio": None
-    })
-    with st.spinner("Assistant is typing..."):
+# User input and chatbot logic
+if prompt := st.chat_input("Ask your question:"):
+    # Append user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    
+    # Display user message in chat message container
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    
+    # Get assistant response
+    with st.spinner("Assistant is thinking..."):
         try:
             agent = RoyalEnfieldBikeAssistant(
                 llm_model="gpt-4",
@@ -105,49 +104,59 @@ if user_input and (not st.session_state.messages or st.session_state.messages[-1
                 redis_cache_db=0,
                 vector_index="bike_index"
             )
-            results = asyncio.run(agent.processed_query(user_query=user_input))
-
-            content, metadata = None, None
-            if isinstance(results, dict) and "content" in results and "metadata" in results:
-                content, metadata = results["content"], results["metadata"]
+            
+            results = asyncio.run(agent.processed_query(user_query=prompt))
+            
+            content = None
+            if isinstance(results, dict) and "content" in results:
+                content = results["content"]
             else:
                 if isinstance(results, str):
                     content = re.split(r"additional_kwargs", results, 1)[0]
                     content = clean_text(content)
                 else:
                     content = clean_text(str(results))
-
-            if content.lower().startswith("content"):
+            
+            if content and content.lower().startswith("content"):
                 content = content[7:].strip()
-
-            st.session_state.query_history.append((user_input, content))
-
-            if content and str(content).strip():
-                audio_buf = speaker_stream(content)
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": content,
-                    "audio": audio_buf
-                })
-            else:
-                audio_buf = speak_stream("No results found.")
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": "No results found.",
-                    "audio": audio_buf
-                })
+            
+            st.session_state.query_history.append((prompt, content))
+            
+            # Display assistant message
+            with st.chat_message("assistant"):
+                if content and str(content).strip():
+                    st.markdown(content)
+                    audio_buf = speaker_stream(content)
+                    st.audio(audio_buf, format="audio/mp3", autoplay=True)
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": content,
+                        "audio": audio_buf
+                    })
+                else:
+                    no_results_text = "No results found."
+                    st.markdown(no_results_text)
+                    audio_buf = speak_stream(no_results_text)
+                    st.audio(audio_buf, format="audio/mp3", autoplay=True)
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": no_results_text,
+                        "audio": audio_buf
+                    })
         except Exception as e:
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": f"Error: {str(e)}",
-                "audio": None
-            })
-            st.error(f"Some Unexpected Value Error Arised : {e}")
+            with st.chat_message("assistant"):
+                error_message = f"Error: {str(e)}"
+                st.markdown(error_message)
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": error_message,
+                    "audio": None
+                })
+            st.error(f"Unexpected error: {e}")
 
-    st.rerun()
-
+# Sidebar for Query History
 with st.sidebar:
-    st.header("🕘 Query History")
+    st.markdown("<h3 class='sidebar-header'>🕘 Query History</h3>", unsafe_allow_html=True)
     if st.session_state.query_history:
         for i, (q, c) in enumerate(reversed(st.session_state.query_history), 1):
             st.markdown(
