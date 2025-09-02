@@ -85,6 +85,7 @@ for message in st.session_state.messages:
 
 # User input and chatbot logic
 if prompt := st.chat_input("Ask your question:"):
+    
     # Append user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
     

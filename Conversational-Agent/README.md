@@ -1,4 +1,4 @@
-# 🤖 Neo4j AI Assistant
+# 🤖 AI Assistant
 
 A powerful AI-powered product analysis and query assistant that combines web scraping, Neo4j graph database, and natural language processing to help you analyze e-commerce products.
 

@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-llm = ChatOpenAI(model_name="gpt-4o", temperature=0, openai_api_key="your_openai_api_key_here")
+llm = ChatOpenAI(model_name="gpt-4o", temperature=0, openai_api_key=os.environ["OPENAI_API_KEY"])
 
 prompt_template = PromptTemplate.from_template("""
         OBJECTIVE:  
@@ -74,6 +74,7 @@ prompt_template = PromptTemplate.from_template("""
         REMEMBER:
         Your sole job is to convert a user’s request into an accurate Cypher query focused on the `Product` node. Keep responses clean, minimal, and executable. Never provide explanations unless asked.
         """)
+
 # Use the new RunnableSequence instead of LLMChain
 chain = prompt_template | llm
 
