@@ -98,8 +98,8 @@ if prompt := st.chat_input("Ask your question:"):
         try:
             agent = RoyalEnfieldBikeAssistant(
                 llm_model="gpt-4",
-                openai_api_key=st.secrets["openai"]["OPENAI_API_KEY"],
-                tavily_api_key=st.secrets["tavily"]["TAVILY_API_KEY"],
+                openai_api_key=st.secrets["openai"]["api_key"],
+                tavily_api_key=st.secrets["tavily"]["api_key"],
                 redis_url=st.secrets["redis"]["REDIS_URL"],
                 redis_cache_host=st.secrets["redis"]["REDIS_HOST"],
                 redis_port=17094,

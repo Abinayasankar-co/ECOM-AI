@@ -22,6 +22,9 @@ gTTS==2.5.1
 # MP3 playback and conversion
 pydub==0.25.1
 
+#Pyttsx
+pyttsx3==2.90
+
 #Tavily for External Web Searching for the Content
 tavily-python==0.7.11
 
