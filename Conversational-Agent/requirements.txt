@@ -28,3 +28,5 @@ pyttsx3==2.90
 #Tavily for External Web Searching for the Content
 tavily-python==0.7.11
 
+#redis
+redis==6.2.0
