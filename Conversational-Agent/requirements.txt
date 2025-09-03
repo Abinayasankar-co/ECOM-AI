@@ -30,3 +30,15 @@ tavily-python==0.7.11
 
 #redis
 redis==6.2.0
+
+# LangChain core framework
+langchain==0.3.26
+
+# OpenAI integration for LangChain
+langchain-openai==0.3.25
+
+# Community-contributed LangChain integrations
+langchain-community==0.3.27
+
+# Redis integration for LangChain memory
+langchain-redis==0.2.3
