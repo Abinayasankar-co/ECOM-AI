@@ -57,7 +57,7 @@ class RoyalEnfieldBikeAssistant:
         try:
             prompt1 = ChatPromptTemplate.from_messages(
                 [
-                    ("system", "The task for you is to write an elaborative and more informative question from the user's normal question. The answer must be strictly in JSON format with key 'questions' and value as a list."),
+                    ("system", "The task for you is to write an elaborative and more informative question from the user's normal question regarding the bikes that belong to royal enfield company and their showrooms. The answer must be strictly in JSON format with key 'questions' and value as a list."),
                     ("user", f"The Query to be given is: {user_query}")
                 ]
             )
@@ -91,7 +91,7 @@ class RoyalEnfieldBikeAssistant:
 
             prompt2 = ChatPromptTemplate.from_messages(
                 [
-                    ("system", "Use the sub-questions, Tavily results, and document content to craft a conversational response. The Response should be more human and the generated response should be in a way of a dealer convinving the customer to buy the product. with the below data's provide a speech whoch convinces the customer and make them interactive with your statements"),
+                    ("system", "Use the sub-questions, Tavily results, and document content to craft a conversational response. The Response should be more human and the generated response should be in a way of a dealer convincing the customer to buy the bike. with the below data's provide a speech which convinces the customer and make them interactive with your statementsv, Note: The showroom is selling Royal Enfield Bies only use that bikes."),
                     ("user","Sub-questions: {subqs}\nTavily: {tavily}\nDocuments: {docs}")
                 ],
             )

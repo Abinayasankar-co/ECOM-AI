@@ -139,7 +139,7 @@ if prompt := st.chat_input("Ask your question:"):
                 else:
                     no_results_text = "No results found."
                     st.markdown(no_results_text)
-                    audio_buf = speak_stream(no_results_text)
+                    audio_buf = speaker_stream(no_results_text)
                     st.audio(audio_buf, format="audio/mp3", autoplay=True)
                     st.session_state.messages.append({
                         "role": "assistant",
