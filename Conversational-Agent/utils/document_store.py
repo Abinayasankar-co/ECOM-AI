@@ -5,6 +5,7 @@ from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters.character import RecursiveCharacterTextSplitter
 from langchain_redis import RedisVectorStore
 from langchain_openai import OpenAIEmbeddings
+import streamlit as st
 
 load_dotenv()
 
@@ -15,7 +16,7 @@ class DocumentStore:
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.embeddings = OpenAIEmbeddings(
-            api_key=os.environ["OPENAI_API_KEY"]
+            api_key=st.secrets["openai"]["api_key"]
         )
 
     def ingest_directory(self, directory_path: str, glob_pattern: str = "*.*"):
