@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from tavily import TavilyClient
-from .document_store import DocumentStore
+from utils.document_store import DocumentStore
 
 load_dotenv()
 
