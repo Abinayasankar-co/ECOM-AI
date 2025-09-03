@@ -14,6 +14,7 @@ load_dotenv()
 class RoyalEnfieldBikeAssistant:
     def __init__(self, 
                  llm_model: str, 
+                 openai_api_key:str,
                  tavily_api_key: str, 
                  redis_url: str, 
                  redis_cache_host: str,
@@ -23,7 +24,7 @@ class RoyalEnfieldBikeAssistant:
                  vector_index: str
         ):
         try:
-            self.llm = ChatOpenAI(model_name=llm_model, temperature=0)
+            self.llm = ChatOpenAI(model_name=llm_model, temperature=0,api_key=openai_api_key)
             self.tavily = TavilyClient(api_key=tavily_api_key)
             #self.redis_cache = redis.StrictRedis(host=redis_cache_host, port=redis_cache_port, db=redis_cache_db)
             try:

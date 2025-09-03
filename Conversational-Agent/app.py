@@ -3,7 +3,7 @@ import re
 import asyncio
 import streamlit as st
 from dotenv import load_dotenv
-from utils.tts import speak_stream, speaker_stream
+from utils.tts import speaker_stream
 from utils.assistant_agent import RoyalEnfieldBikeAssistant
 from utils.utilsreq import clean_text
 
@@ -98,11 +98,12 @@ if prompt := st.chat_input("Ask your question:"):
         try:
             agent = RoyalEnfieldBikeAssistant(
                 llm_model="gpt-4",
-                tavily_api_key=st.secrets["TAVILY_API_KEY"],
-                redis_url=st.secrets["REDIS_URL"],
-                redis_cache_host=st.secrets["REDIS_HOST"],
+                openai_api_key=st.secrets["openai"]["OPENAI_API_KEY"],
+                tavily_api_key=st.secrets["tavily"]["TAVILY_API_KEY"],
+                redis_url=st.secrets["redis"]["REDIS_URL"],
+                redis_cache_host=st.secrets["redis"]["REDIS_HOST"],
                 redis_port=17094,
-                redis_cache_password=st.secrets["REDIS_PASSWORD"],
+                redis_cache_password=st.secrets["redis"]["REDIS_PASSWORD"],
                 redis_cache_db=0,
                 vector_index="bike_index"
             )
