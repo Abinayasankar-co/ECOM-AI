@@ -56,7 +56,7 @@ if __name__ == "__main__":
     try:
         #Uploading the Db into the Vector Store
         csv_path = "../dataset/Inventory.csv"
-        redis_url="redis://localhost:6379"
+        redis_url=os.environ["REDIS_URL"]
         index_name = "bike_index"
         vector_store = ingest_csv(
             csv_path=csv_path,

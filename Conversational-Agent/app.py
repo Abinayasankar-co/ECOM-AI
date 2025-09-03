@@ -98,10 +98,11 @@ if prompt := st.chat_input("Ask your question:"):
         try:
             agent = RoyalEnfieldBikeAssistant(
                 llm_model="gpt-4",
-                tavily_api_key=os.environ["TAVILY_API_KEY"],
-                redis_url=os.environ["REDIS_URL"],
-                redis_cache_host="localhost",
-                redis_cache_port=6379,
+                tavily_api_key=st.secrets["TAVILY_API_KEY"],
+                redis_url=st.secrets["REDIS_URL"],
+                redis_cache_host=st.secrets["REDIS_HOST"],
+                redis_port=17094,
+                redis_cache_password=st.secrets["REDIS_PASSWORD"],
                 redis_cache_db=0,
                 vector_index="bike_index"
             )

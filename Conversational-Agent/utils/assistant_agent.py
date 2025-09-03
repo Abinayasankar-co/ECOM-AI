@@ -10,12 +10,36 @@ from .document_store import DocumentStore
 
 load_dotenv()
 
+# redis_cache_host: str, redis_cache_port: int, redis_cache_db: int,
 class RoyalEnfieldBikeAssistant:
-    def __init__(self, llm_model: str, tavily_api_key: str, redis_url: str, redis_cache_host: str, redis_cache_port: int, redis_cache_db: int, vector_index: str):
-        self.llm = ChatOpenAI(model_name=llm_model, temperature=0)
-        self.tavily = TavilyClient(api_key=tavily_api_key)
-        self.redis_cache = redis.StrictRedis(host=redis_cache_host, port=redis_cache_port, db=redis_cache_db)
-        self.doc_store = DocumentStore(redis_url=redis_url, index_name=vector_index)
+    def __init__(self, 
+                 llm_model: str, 
+                 tavily_api_key: str, 
+                 redis_url: str, 
+                 redis_cache_host: str,
+                 redis_port: int,
+                 redis_cache_password: str,
+                 redis_cache_db: int, 
+                 vector_index: str
+        ):
+        try:
+            self.llm = ChatOpenAI(model_name=llm_model, temperature=0)
+            self.tavily = TavilyClient(api_key=tavily_api_key)
+            #self.redis_cache = redis.StrictRedis(host=redis_cache_host, port=redis_cache_port, db=redis_cache_db)
+            try:
+              self.redis_cache = redis.StrictRedis(
+                   host=redis_cache_host,
+                   port=redis_port,
+                   decode_responses=True,
+                   username="default",
+                   password=redis_cache_password,
+                   db = redis_cache_db
+                    )
+            except Exception as e:
+                raise ValueError(f"the Exception Arises in configuration of Cache:{e}")
+            self.doc_store = DocumentStore(redis_url=redis_url, index_name=vector_index)
+        except Exception as e:
+            print(f"the Error in the COnfigurational Settings : {e}")
 
     def _check_cache(self, query: str) -> str:
         key = f"bike_cache:{query}"
@@ -89,14 +113,15 @@ if __name__ == "__main__":
     agent = RoyalEnfieldBikeAssistant(
         llm_model="gpt-4",
         tavily_api_key=os.environ["TAVILY_API_KEY"],
-        redis_url="redis://localhost:6379",
-        redis_cache_host="localhost",
-        redis_cache_port=6379,
-        redis_cache_db=0,
+        redis_url=os.environ["REDIS_URL"],
+        #redis_cache_host="localhost",
+        #redis_cache_port=6379,
+        #redis_cache_db=0,
         vector_index="bike_index"
     )
     user_input = "Tell me about the latest Royal Enfield bike model available with larger spec and its features"
     result = asyncio.run(agent.processed_query(user_input))
+    print(result)
     if isinstance(result, dict) and "content" in result and "metadata" in result:
         content, metadata = result["content"] , result["metadata"]
         print(f"The Content : {content} , Metadata : {metadata}")
