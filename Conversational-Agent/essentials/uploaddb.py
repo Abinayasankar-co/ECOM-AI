@@ -4,11 +4,11 @@ from langchain_community.document_loaders.csv_loader import CSVLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_redis import RedisVectorStore
 from langchain_openai import OpenAIEmbeddings
-
+import streamlit as st
 
 load_dotenv()
 
-embeddings = OpenAIEmbeddings(api_key=os.environ["OPENAI_API_KEY"])
+embeddings = OpenAIEmbeddings(api_key=st["openai"]["api_key"])
 
 def ingest_csv(
         csv_path: str, 
