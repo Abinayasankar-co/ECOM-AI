@@ -8,7 +8,7 @@ import streamlit as st
 
 load_dotenv()
 
-embeddings = OpenAIEmbeddings(api_key=st["openai"]["api_key"])
+embeddings = OpenAIEmbeddings(api_key=st.secrets["openai"]["api_key"])
 
 def ingest_csv(
         csv_path: str, 
