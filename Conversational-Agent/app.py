@@ -1,4 +1,4 @@
-import os
+import tempfile
 import re
 import asyncio
 import streamlit as st
@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from utils.tts import speaker_stream
 from utils.assistant_agent import RoyalEnfieldBikeAssistant
 from utils.utilsreq import clean_text
-
+from essentials.uploaddb import ingest_csv
 # Load environment variables
 load_dotenv()
 
@@ -168,3 +168,26 @@ with st.sidebar:
             )
     else:
         st.write("No queries yet.")
+    
+    #Querying custom Data
+    st.markdown("<h3 class='sidebar-header'>📤 Upload Custom Data</h3>", unsafe_allow_html=True)
+    uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+    if uploaded_file is not None:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp_file:
+            tmp_file.write(uploaded_file.read())
+            tmp_path = tmp_file.name
+        redis_url = st.secrets["redis"]["REDIS_URL"]
+        index_name = "bike_index"
+        with st.spinner("Vectorizing and uploading to Redis..."):
+            result = ingest_csv(
+                csv_path=tmp_path,
+                redis_url=redis_url,
+                index_name=index_name
+            )
+        if result:
+            st.success("CSV uploaded and vectorized successfully!")
+        else:
+            st.error("Failed to vectorize and upload CSV.")
+
+
+
